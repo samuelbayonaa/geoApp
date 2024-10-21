@@ -1,68 +1,52 @@
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
-  ScrollView,
-  Text,
-  TouchableOpacity,
   View,
-  Platform,
-  Image,
-  KeyboardAvoidingView,
-  Dimensions,
+  Text,
+  ScrollView,
   Alert,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
 } from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
-
-import CustomButtom from "../../components/CustomButton";
+import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
-import { router } from "expo-router";
-import { createRestaurant } from "../../lib/appwrite";
+import { createReview } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { Picker } from "@react-native-picker/picker";
+import { router } from "expo-router";
 
 const Review = () => {
+  const { restaurantId } = useLocalSearchParams();
   const { user } = useGlobalContext();
-  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     ratingPlace: "",
     ratingDish: "",
     ratingService: "",
     writeReview: "",
-    recomendation: "",
+    recommendation: "",
   });
 
-  const submit = async () => {
+  const submitReview = async () => {
     if (
-      (form.ratingPlace === "") |
-      (form.ratingDish === "") |
-      (form.ratingService === "") |
-      (form.writeReview === "") |
-      (form.recomendation === "")
+      !form.ratingPlace ||
+      !form.ratingDish ||
+      !form.ratingService ||
+      !form.writeReview ||
+      !form.recommendation
     ) {
-      return Alert.alert("Please provide all fields");
+      return Alert.alert("Error", "Por favor completa todos los campos");
     }
 
-    setUploading(true);
     try {
-      await createRestaurant({
-        ...form,
-        userId: user.$id,
+      await createReview(form, restaurantId, user.$id);
+      Alert.alert("Good", "Review Send!");
+      router.push({
+        pathname: "/home",
       });
-
-      Alert.alert("Success", "Review Register");
-      router.push("/home");
     } catch (error) {
       Alert.alert("Error", error.message);
-    } finally {
-      setForm({
-        ratingPlace: "",
-        ratingDish: "",
-        ratingService: "",
-        writeReview: "",
-        recomendation: null,
-      });
-
-      setUploading(false);
     }
   };
 
@@ -82,59 +66,73 @@ const Review = () => {
               minHeight: Dimensions.get("window").height - 100,
             }}
           >
-            <View className="flex-row items-center justify-center">
-              <Text className="ml-4 text-2xl font-nsemibold">
-                We need your opinion
+            {/* Título del formulario */}
+            <View className="flex-row items-center justify-center mb-6">
+              <Text className="ml-3 text-2xl font-nsemibold">
+                We need your opinion!
               </Text>
-              <Image
-                source={images.logo}
-                resizeMode="contain"
-                className="w-[80px] h-[80px]"
-              />
             </View>
+
+            {/* Campos del formulario */}
             <FormField
               value={form.ratingPlace}
-              handleChangeText={(e) => setForm({ ...form, ratingPlace: e })}
-              otherStyles="mt-10"
-              placeholder="Rate the place"
-            />
-            <FormField
-              value={form.ratingService}
-              handleChangeText={(e) => setForm({ ...form, ratingService: e })}
+              handleChangeText={(value) =>
+                setForm({ ...form, ratingPlace: value })
+              }
               otherStyles="mt-7"
-              placeholder="Rate the Service"
+              placeholder="Rate the place"
+              keyboardType="numeric"
             />
             <FormField
               value={form.ratingDish}
-              handleChangeText={(e) => setForm({ ...form, ratingDish: e })}
+              handleChangeText={(value) =>
+                setForm({ ...form, ratingDish: value })
+              }
               otherStyles="mt-7"
-              placeholder="Rate of Dish"
+              placeholder="Rate the dish"
+              keyboardType="numeric"
             />
-
+            <FormField
+              value={form.ratingService}
+              handleChangeText={(value) =>
+                setForm({ ...form, ratingService: value })
+              }
+              otherStyles="mt-7"
+              placeholder="Rate the service"
+              keyboardType="numeric"
+            />
             <FormField
               value={form.writeReview}
-              handleChangeText={(e) => setForm({ ...form, writeReview: e })}
+              handleChangeText={(value) =>
+                setForm({ ...form, writeReview: value })
+              }
               otherStyles="mt-7"
-              placeholder="Write a Recomendation"
+              placeholder="Write a review"
+              multiline
             />
-            <View className="p-4 mt-8 rounded-lg ">
-              <Text className="mb-4 text-xl font-nsemibold">Recomendation</Text>
+
+            {/* Picker para la recomendación */}
+            <View className="mt-7">
+              <Text className="mb-2 text-lg font-nsemibold">
+                Recommendation
+              </Text>
               <Picker
-                selectedValue={form.recomendation}
-                onValueChange={(itemValue) =>
-                  setForm({ ...form, recomendation: itemValue })
+                selectedValue={form.recommendation}
+                onValueChange={(value) =>
+                  setForm({ ...form, recommendation: value })
                 }
-                className="p-2 bg-gray-100 rounded-lg"
+                style={{ backgroundColor: "#f5f5f5", borderRadius: 8 }}
               >
                 <Picker.Item label="Yes" value="Yes" />
                 <Picker.Item label="No" value="No" />
               </Picker>
             </View>
-            <CustomButtom
-              title="Send Review"
-              handlePress={submit}
+
+            <CustomButton
+              title="Submit Review"
+              handlePress={submitReview}
               containerStyles="mt-7"
-              isLoading=""
+              isLoading={false}
             />
           </View>
         </ScrollView>

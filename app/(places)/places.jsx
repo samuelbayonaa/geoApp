@@ -40,10 +40,10 @@ const Places = () => {
   }, [fetchRestaurantData]);
 
   const goToReview = () => {
-    router.push("/review");
-  };
-  const goToItinerary = () => {
-    router.push("/createItinerary");
+    router.push({
+      pathname: "/review",
+      params: { restaurantId: restaurantId }, // Pasar el restaurantId como parámetro
+    });
   };
 
   if (!restaurant) {
@@ -83,13 +83,6 @@ const Places = () => {
             Type of place: {restaurant.type}
           </Text>
         </TouchableOpacity>
-        <CustomButton
-          title="Go to Itinerary"
-          handlePress={goToItinerary}
-          containerStyles="mt-7"
-          isLoading=""
-        />
-        <Text className="text-center mt-7 font-nbold ">Or</Text>
         <CustomButton
           title="Go to Review"
           handlePress={goToReview}
